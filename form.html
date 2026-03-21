@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Hardik DevOps Project</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+h2{
+    text-align:center;
+    color:#003366;
+    font-family:Arial;
+}
+
+.form-box{
+    width:400px;
+    margin:40px auto;
+    padding:25px;
+    border-radius:10px;
+    background:white;
+    box-shadow:0 0 15px rgba(0,0,0,0.2);
+}
+</style>
+
+<script src="validate.js"></script>
+
+</head>
+
+<body>
+
+<h2>Hardik DevOps Registration Form</h2>
+
+<div class="form-box">
+
+<form onsubmit="return validateForm()">
+
+<label>Name:</label><br>
+<input type="text" id="name" placeholder="Enter your name"><br><br>
+
+<label>Email ID:</label><br>
+<input type="email" id="email" placeholder="Enter your email"><br><br>
+
+<label>Password:</label><br>
+<input type="password" id="password" placeholder="Enter password"><br><br>
+
+<label>Confirm Password:</label><br>
+<input type="password" id="confirm" placeholder="Confirm password"><br><br>
+
+<label>Gender:</label><br>
+<input type="radio" name="gender" value="Male"> Male
+<input type="radio" name="gender" value="Female"> Female
+<input type="radio" name="gender" value="Other"> Other
+<br><br>
+
+<label>Course:</label><br>
+<select id="course">
+<option value="">Select Course</option>
+<option>BCA</option>
+<option>BBA</option>
+<option>MCA</option>
+<option>MBA</option>
+</select>
+
+<br><br>
+
+<input type="submit" id="register" value="Register">
+
+</form>
+
+</div>
+
+</body>
+</html>
