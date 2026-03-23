@@ -5,7 +5,7 @@ Selenium automated test suite for the Student Feedback Registration Form.
 
 Requirements
 ------------
-    pip install selenium
+    pip install selenium webdriver-manager
 
 Run (unittest)
 --------------
@@ -15,9 +15,6 @@ Run (pytest – richer output)
 -----------------------------
     pip install pytest
     pytest test_feedback_form.py -v
-
-Note: Ensure Google Chrome and the matching ChromeDriver binary are present
-      in the same directory or on your PATH.
 """
 
 import os
@@ -30,12 +27,25 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 # ── Configuration ──────────────────────────────────────────────────────────────
-BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
-FORM_URL    = f"file:///{BASE_DIR}/index.html"
-DRIVER_PATH = os.path.join(BASE_DIR, "chromedriver")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FORM_URL = f"file:///{BASE_DIR}/index.html"
+
+
+def _build_driver():
+    """Create a headless Chrome WebDriver using webdriver-manager."""
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1280,900")
+    # Let webdriver-manager download / cache the right ChromeDriver
+    service = Service(ChromeDriverManager().install())
+    return webdriver.Chrome(service=service, options=options)
 
 
 class FeedbackFormTests(unittest.TestCase):
@@ -44,34 +54,24 @@ class FeedbackFormTests(unittest.TestCase):
     # ── Setup / Teardown ───────────────────────────────────────────────────────
 
     def setUp(self):
-        """Initialise headless Chrome before every test."""
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--window-size=1280,900")
-
-        service = Service(executable_path=DRIVER_PATH)
-        self.driver = webdriver.Chrome(service=service, options=options)
-        self.wait   = WebDriverWait(self.driver, timeout=10)
+        self.driver = _build_driver()
+        self.wait = WebDriverWait(self.driver, timeout=10)
         self.driver.get(FORM_URL)
 
     def tearDown(self):
-        """Quit the browser after every test."""
         self.driver.quit()
 
-    # ── Helper: fill the form ──────────────────────────────────────────────────
+    # ── Helper: fill form ──────────────────────────────────────────────────────
 
     def _fill_form(
         self,
-        name:       str = "Hardik Jain",
-        email:      str = "hardik@example.com",
-        mobile:     str = "9876543210",
-        department: str = "cse",
-        gender:     str = "Male",
-        feedback:   str = "This is a sample feedback comment for testing purposes.",
+        name="Hardik Jain",
+        email="hardik@example.com",
+        mobile="9876543210",
+        department="cse",
+        gender="Male",
+        feedback="This is a sample feedback comment for testing purposes.",
     ):
-        """Populate every field on the feedback form."""
         d = self.driver
 
         d.find_element(By.ID, "studentName").clear()
@@ -96,14 +96,13 @@ class FeedbackFormTests(unittest.TestCase):
         d.find_element(By.ID, "feedbackComments").clear()
         d.find_element(By.ID, "feedbackComments").send_keys(feedback)
 
-    def _get_alert_text(self) -> str:
-        """Wait for a browser alert, capture its text, and dismiss it."""
+    def _get_alert_text(self):
         alert = self.wait.until(EC.alert_is_present())
-        text  = alert.text
+        text = alert.text
         alert.accept()
         return text
 
-    def _is_alert_present(self) -> bool:
+    def _is_alert_present(self):
         try:
             WebDriverWait(self.driver, 2).until(EC.alert_is_present())
             self.driver.switch_to.alert.dismiss()
@@ -111,7 +110,7 @@ class FeedbackFormTests(unittest.TestCase):
         except Exception:
             return False
 
-    def _get_error(self, error_id: str) -> str:
+    def _get_error(self, error_id):
         return self.driver.find_element(By.ID, error_id).text.strip()
 
     # ── Test cases ─────────────────────────────────────────────────────────────
@@ -124,8 +123,10 @@ class FeedbackFormTests(unittest.TestCase):
 
     def test_02_all_fields_present(self):
         """Verify all required input fields exist in the DOM."""
-        for field_id in ("studentName", "studentEmail", "mobileNumber",
-                         "department", "feedbackComments"):
+        for field_id in (
+            "studentName", "studentEmail", "mobileNumber",
+            "department", "feedbackComments"
+        ):
             elem = self.driver.find_element(By.ID, field_id)
             self.assertTrue(elem.is_displayed(), f"Field '{field_id}' is not visible.")
 
@@ -148,46 +149,40 @@ class FeedbackFormTests(unittest.TestCase):
         self.assertIn("Thank you", alert_text)
 
     def test_05_empty_name_shows_error(self):
-        """Submitting with an empty name should show an inline error."""
+        """Submitting with empty name should show inline error."""
         self._fill_form(name="")
         self.driver.find_element(By.ID, "submitBtn").click()
-        error = self._get_error("nameError")
-        self.assertIn("name", error.lower())
+        self.assertIn("name", self._get_error("nameError").lower())
 
     def test_06_invalid_email_shows_error(self):
-        """An invalid email should show an inline error."""
+        """Invalid email should show inline error."""
         self._fill_form(email="not-valid-email")
         self.driver.find_element(By.ID, "submitBtn").click()
-        error = self._get_error("emailError")
-        self.assertIn("email", error.lower())
+        self.assertIn("email", self._get_error("emailError").lower())
 
     def test_07_invalid_mobile_shows_error(self):
-        """A mobile number not matching 10-digit Indian format should show an error."""
+        """Invalid mobile number should show inline error."""
         self._fill_form(mobile="12345")
         self.driver.find_element(By.ID, "submitBtn").click()
-        error = self._get_error("mobileError")
-        self.assertIn("mobile", error.lower())
+        self.assertIn("mobile", self._get_error("mobileError").lower())
 
     def test_08_no_department_shows_error(self):
-        """Submitting without selecting a department should show an error."""
-        self._fill_form(department="")    # skip department selection
+        """Missing department selection should show inline error."""
+        self._fill_form(department="")
         self.driver.find_element(By.ID, "submitBtn").click()
-        error = self._get_error("deptError")
-        self.assertIn("department", error.lower())
+        self.assertIn("department", self._get_error("deptError").lower())
 
     def test_09_no_gender_shows_error(self):
-        """Submitting without selecting a gender should show an error."""
-        self._fill_form(gender="")        # skip gender
+        """Missing gender selection should show inline error."""
+        self._fill_form(gender="")
         self.driver.find_element(By.ID, "submitBtn").click()
-        error = self._get_error("genderError")
-        self.assertIn("gender", error.lower())
+        self.assertIn("gender", self._get_error("genderError").lower())
 
     def test_10_short_feedback_shows_error(self):
-        """Feedback shorter than 10 characters should show an error."""
+        """Feedback shorter than 10 characters should show error."""
         self._fill_form(feedback="Short")
         self.driver.find_element(By.ID, "submitBtn").click()
-        error = self._get_error("feedbackError")
-        self.assertIn("feedback", error.lower())
+        self.assertIn("feedback", self._get_error("feedbackError").lower())
 
     def test_11_character_counter_updates(self):
         """Character counter should reflect the number of typed characters."""
@@ -208,13 +203,12 @@ class FeedbackFormTests(unittest.TestCase):
 
     def test_13_all_departments_selectable(self):
         """Verify all department options can be selected."""
-        select  = Select(self.driver.find_element(By.ID, "department"))
+        select = Select(self.driver.find_element(By.ID, "department"))
         options = ["cse", "it", "ece", "mech", "civil", "mba", "mca"]
         for opt in options:
             select.select_by_value(opt)
-            self.assertEqual(
-                select.first_selected_option.get_attribute("value"), opt
-            )
+            selected = select.first_selected_option.get_attribute("value")
+            self.assertEqual(selected, opt)
 
     def test_14_all_gender_options_selectable(self):
         """Verify Male, Female, and Other radio buttons work."""
