@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Student Feedback Registration Form – share your feedback about your academic experience." />
+  <title>Student Feedback Registration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="form-header">
+      <div class="header-icon">📋</div>
+      <h1>Student Feedback</h1>
+      <p class="subtitle">We value your opinion — help us improve!</p>
+    </div>
+
+    <form id="feedbackForm" onsubmit="return validateForm()">
+
+      <!-- Student Name -->
+      <div class="form-group">
+        <label for="studentName">Student Name <span class="required">*</span></label>
+        <input
+          type="text"
+          id="studentName"
+          name="studentName"
+          placeholder="e.g. Hardik Jain"
+          autocomplete="name"
+        />
+        <span class="error-msg" id="nameError"></span>
+      </div>
+
+      <!-- Email ID -->
+      <div class="form-group">
+        <label for="studentEmail">Email ID <span class="required">*</span></label>
+        <input
+          type="email"
+          id="studentEmail"
+          name="studentEmail"
+          placeholder="e.g. hardik@example.com"
+          autocomplete="email"
+        />
+        <span class="error-msg" id="emailError"></span>
+      </div>
+
+      <!-- Mobile Number -->
+      <div class="form-group">
+        <label for="mobileNumber">Mobile Number <span class="required">*</span></label>
+        <input
+          type="tel"
+          id="mobileNumber"
+          name="mobileNumber"
+          placeholder="e.g. 9876543210"
+          maxlength="10"
+          autocomplete="tel"
+        />
+        <span class="error-msg" id="mobileError"></span>
+      </div>
+
+      <!-- Department -->
+      <div class="form-group">
+        <label for="department">Department <span class="required">*</span></label>
+        <select id="department" name="department">
+          <option value="" disabled selected>Select your department</option>
+          <option value="cse">Computer Science &amp; Engineering</option>
+          <option value="it">Information Technology</option>
+          <option value="ece">Electronics &amp; Communication Engineering</option>
+          <option value="mech">Mechanical Engineering</option>
+          <option value="civil">Civil Engineering</option>
+          <option value="mba">Master of Business Administration</option>
+          <option value="mca">Master of Computer Applications</option>
+        </select>
+        <span class="error-msg" id="deptError"></span>
+      </div>
+
+      <!-- Gender -->
+      <div class="form-group">
+        <label>Gender <span class="required">*</span></label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="gender" id="genderMale" value="Male" />
+            <span class="radio-custom"></span> Male
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="gender" id="genderFemale" value="Female" />
+            <span class="radio-custom"></span> Female
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="gender" id="genderOther" value="Other" />
+            <span class="radio-custom"></span> Other
+          </label>
+        </div>
+        <span class="error-msg" id="genderError"></span>
+      </div>
+
+      <!-- Feedback Comments -->
+      <div class="form-group">
+        <label for="feedbackComments">Feedback Comments <span class="required">*</span></label>
+        <textarea
+          id="feedbackComments"
+          name="feedbackComments"
+          rows="4"
+          placeholder="Share your thoughts, suggestions, or concerns here…"
+        ></textarea>
+        <span class="char-count" id="charCount">0 / 500</span>
+        <span class="error-msg" id="feedbackError"></span>
+      </div>
+
+      <!-- Buttons -->
+      <div class="btn-group">
+        <button type="submit" id="submitBtn">✅ Submit Feedback</button>
+        <button type="reset"  id="resetBtn"  onclick="resetForm()">🔄 Reset</button>
+      </div>
+
+    </form>
+
+  </div>
+
+  <script>
+    /* ── Character counter ── */
+    const textarea  = document.getElementById("feedbackComments");
+    const charCount = document.getElementById("charCount");
+    const MAX_CHARS = 500;
+
+    textarea.addEventListener("input", () => {
+      const len = textarea.value.length;
+      charCount.textContent = `${len} / ${MAX_CHARS}`;
+      charCount.style.color = len > MAX_CHARS ? "#ef4444" : "#6b7280";
+    });
+
+    /* ── Validation ── */
+    function showError(id, msg) {
+      document.getElementById(id).textContent = msg;
+    }
+    function clearErrors() {
+      ["nameError","emailError","mobileError","deptError","genderError","feedbackError"]
+        .forEach(id => document.getElementById(id).textContent = "");
+    }
+
+    function validateForm() {
+      clearErrors();
+      let valid = true;
+
+      const name     = document.getElementById("studentName").value.trim();
+      const email    = document.getElementById("studentEmail").value.trim();
+      const mobile   = document.getElementById("mobileNumber").value.trim();
+      const dept     = document.getElementById("department").value;
+      const gender   = document.querySelector("input[name='gender']:checked");
+      const feedback = textarea.value.trim();
+
+      if (!name) {
+        showError("nameError", "Student name is required.");
+        valid = false;
+      }
+
+      const emailRe = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
+      if (!emailRe.test(email)) {
+        showError("emailError", "Please enter a valid email address.");
+        valid = false;
+      }
+
+      const mobileRe = /^[6-9]\d{9}$/;
+      if (!mobileRe.test(mobile)) {
+        showError("mobileError", "Enter a valid 10-digit Indian mobile number.");
+        valid = false;
+      }
+
+      if (!dept) {
+        showError("deptError", "Please select your department.");
+        valid = false;
+      }
+
+      if (!gender) {
+        showError("genderError", "Please select your gender.");
+        valid = false;
+      }
+
+      if (feedback.length < 10) {
+        showError("feedbackError", "Feedback must be at least 10 characters.");
+        valid = false;
+      } else if (feedback.length > MAX_CHARS) {
+        showError("feedbackError", `Feedback cannot exceed ${MAX_CHARS} characters.`);
+        valid = false;
+      }
+
+      if (valid) {
+        alert("✅ Thank you! Your feedback has been submitted successfully.");
+      }
+      return false; // prevent actual page reload
+    }
+
+    /* ── Reset ── */
+    function resetForm() {
+      clearErrors();
+      charCount.textContent = `0 / ${MAX_CHARS}`;
+      charCount.style.color = "#6b7280";
+    }
+  </script>
+
+</body>
+</html>
